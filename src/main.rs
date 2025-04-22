@@ -1,36 +1,16 @@
+pub mod point;
+
+use point::Point;
+use rand::{
+    Rng,
+    distr::{Distribution, StandardUniform},
+    rng,
+};
 use std::{
     fmt::Debug,
     sync::mpsc::{self, SyncSender, sync_channel},
     thread,
 };
-
-use rand::{
-    Rng,
-    distr::{Distribution, StandardUniform, Uniform},
-    rng,
-};
-
-#[derive(Debug, Default)]
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-/// Specify how to make a random point whose coordinates are between
-/// -1 and 1. With this implementation we can do things like:
-/// `let pt: Point = rng.random()`, and it'll figure out what
-/// _kind_ of thing we want (from the type of `pt`) and then call the
-/// "right" version of `sample` (namely this one). How the pieces
-/// connect are somewhat complex and subtle, but it does work.
-impl Distribution<Point> for StandardUniform {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Point {
-        let dist = Uniform::new(-1.0, 1.0).unwrap();
-        let x = rng.sample(dist);
-        let y = rng.sample(dist);
-
-        Point { x, y }
-    }
-}
 
 struct Sender<T> {
     num_messages: u32,
@@ -82,23 +62,47 @@ where
     }
 }
 
+const NUM_POINTS: u32 = 10_000_000;
+
 fn main() {
-    const NUM_MESSAGES: u32 = 10;
+    let mut num_inside = 0;
+    let mut total_points = 0;
 
-    let (send_channel, receive_channel) = sync_channel::<Point>(3);
+    for i in 0..NUM_POINTS {
+        let point: Point = rng().random();
+        if point.inside_unit_circle() {
+            num_inside += 1;
+        }
+        total_points += 1;
 
-    let sender_thread = thread::spawn(move || {
-        let sender = Sender::new(NUM_MESSAGES, send_channel);
-        sender.send_stuff();
-    });
-
-    let receiver_thread = thread::spawn(move || {
-        let receiver = Receiver::new(NUM_MESSAGES, receive_channel);
-        receiver.receive_stuff();
-    });
-
-    sender_thread.join().unwrap();
-    receiver_thread.join().unwrap();
-
-    println!("All done!")
+        if i % 10_000 == 0 {
+            print_estimate(num_inside, total_points);
+        }
+    }
 }
+
+fn print_estimate(num_inside: u32, total_points: u32) {
+    let estimate = 4.0 * (num_inside as f64) / (total_points as f64);
+    println!("After {total_points} samples our estimate is {estimate}.");
+}
+
+// fn main() {
+//     const NUM_MESSAGES: u32 = 10;
+
+//     let (send_channel, receive_channel) = sync_channel::<Point>(3);
+
+//     let sender_thread = thread::spawn(move || {
+//         let sender = Sender::new(NUM_MESSAGES, send_channel);
+//         sender.send_stuff();
+//     });
+
+//     let receiver_thread = thread::spawn(move || {
+//         let receiver = Receiver::new(NUM_MESSAGES, receive_channel);
+//         receiver.receive_stuff();
+//     });
+
+//     sender_thread.join().unwrap();
+//     receiver_thread.join().unwrap();
+
+//     println!("All done!")
+// }
