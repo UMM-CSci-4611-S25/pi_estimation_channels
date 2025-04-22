@@ -1,6 +1,4 @@
-pub mod point;
-
-use point::Point;
+use pi_estimation_channels::{NUM_POINTS, point::Point, print_estimate};
 use rand::{
     Rng,
     distr::{Distribution, StandardUniform},
@@ -38,14 +36,14 @@ where
 }
 
 struct PointManager {
-    num_messages: u32,
+    num_points: u32,
     receive_channel: mpsc::Receiver<Point>,
 }
 
 impl PointManager {
-    pub fn new(num_messages: u32, receive_channel: mpsc::Receiver<Point>) -> Self {
+    pub fn new(num_points: u32, receive_channel: mpsc::Receiver<Point>) -> Self {
         Self {
-            num_messages,
+            num_points,
             receive_channel,
         }
     }
@@ -54,7 +52,8 @@ impl PointManager {
         let mut num_inside = 0;
         let mut total_points = 0;
 
-        for i in 0..NUM_POINTS {
+        // TODO: Change to `while let`
+        for i in 0..self.num_points {
             let point: Point = self.receive_channel.recv().unwrap();
             if point.inside_unit_circle() {
                 num_inside += 1;
@@ -67,8 +66,6 @@ impl PointManager {
         }
     }
 }
-
-const NUM_POINTS: u32 = 10_000_000;
 
 fn main() {
     let (send_channel, receive_channel) = sync_channel::<Point>(1_000);
@@ -88,25 +85,3 @@ fn main() {
 
     println!("All done!")
 }
-
-fn print_estimate(num_inside: u32, total_points: u32) {
-    let estimate = 4.0 * (num_inside as f64) / (total_points as f64);
-    println!("After {total_points} samples our estimate is {estimate}.");
-}
-
-// fn main() {
-//     let mut num_inside = 0;
-//     let mut total_points = 0;
-
-//     for i in 0..NUM_POINTS {
-//         let point: Point = rng().random();
-//         if point.inside_unit_circle() {
-//             num_inside += 1;
-//         }
-//         total_points += 1;
-
-//         if i % 10_000 == 0 {
-//             print_estimate(num_inside, total_points);
-//         }
-//     }
-// }

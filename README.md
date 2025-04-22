@@ -76,3 +76,5 @@ using `hyperfine` to estimate the times:
 |------------|----------|
 | Serial | 200ms |
 | One generator, one classifier | 450ms |
+
+All the channel versions are done with bounded channels of size 1,000.
