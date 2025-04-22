@@ -7,6 +7,7 @@ use std::{
 use rand::{
     Rng,
     distr::{Distribution, StandardUniform, Uniform},
+    rng,
 };
 
 #[derive(Debug, Default)]
@@ -15,6 +16,12 @@ struct Point {
     y: f64,
 }
 
+/// Specify how to make a random point whose coordinates are between
+/// -1 and 1. With this implementation we can do things like:
+/// `let pt: Point = rng.random()`, and it'll figure out what
+/// _kind_ of thing we want (from the type of `pt`) and then call the
+/// "right" version of `sample` (namely this one). How the pieces
+/// connect are somewhat complex and subtle, but it does work.
 impl Distribution<Point> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Point {
         let dist = Uniform::new(-1.0, 1.0).unwrap();
@@ -44,7 +51,7 @@ where
 
     pub fn send_stuff(&self) {
         for _ in 0..self.num_messages {
-            let value = rand::rng().sample(StandardUniform);
+            let value = rng().random();
             println!("About to send {value:?}.");
             self.send_channel.send(value).unwrap();
         }
