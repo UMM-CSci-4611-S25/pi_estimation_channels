@@ -64,3 +64,17 @@ which is pretty reasonable, leaving enough cores that the
 OS can still be responsive. If we want to crank up
 the performance, we could go to N/3 or even N/2 threads for
 the first and third layers and see what that does.
+
+---
+
+## Results
+
+The following results are for running 10 million samples in `--release` mode,
+using `hyperfine` to estimate the times:
+
+| **Method** | **Time** |
+|------------|----------|
+| Serial | 200ms |
+| One generator, one classifier | 450ms |
+
+All the channel versions are done with bounded channels of size 1,000.
