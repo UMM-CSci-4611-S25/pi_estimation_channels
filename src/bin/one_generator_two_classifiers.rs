@@ -6,6 +6,7 @@ use rand::{
 };
 use std::{
     fmt::Debug,
+    iter::repeat_with,
     sync::mpsc::{self, Receiver, SyncSender, sync_channel},
     thread,
 };
@@ -20,10 +21,10 @@ where
     T: Default + Debug,
     StandardUniform: Distribution<T>,
 {
-    pub fn new(num_messages: usize, send_channels: Vec<SyncSender<T>>) -> Self {
+    pub fn new(num_messages: usize, send_channels: &[SyncSender<T>]) -> Self {
         Self {
             num_messages,
-            send_channels,
+            send_channels: send_channels.to_vec(),
         }
     }
 
@@ -68,7 +69,7 @@ impl PointManager {
             }
             total_points += 1;
 
-            if (total_points + 1) % 10_000 == 0 {
+            if total_points % 10_000 == 0 {
                 self.report_sender
                     .send(Report::new(num_inside, total_points))
                     .unwrap();
@@ -132,27 +133,28 @@ impl Reporter {
     }
 }
 
+const NUM_GENERATORS: usize = 1;
+const NUM_MANAGERS: usize = 2;
+
 fn main() {
     let reporter = Reporter::new();
 
-    let first_manager = PointManager::new(reporter.get_sender());
-    let second_manager = PointManager::new(reporter.get_sender());
+    let managers = repeat_with(|| PointManager::new(reporter.get_sender()))
+        .take(NUM_MANAGERS)
+        .collect::<Vec<_>>();
 
     let generator = MessageGenerator::new(
         NUM_POINTS,
-        vec![first_manager.get_sender(), second_manager.get_sender()],
+        &managers.iter().map(|m| m.get_sender()).collect::<Vec<_>>(),
     );
 
     thread::scope(|s| {
         s.spawn(move || {
             generator.send_messages();
         });
-        s.spawn(move || {
-            first_manager.receive_stuff();
-        });
-        s.spawn(move || {
-            second_manager.receive_stuff();
-        });
+        for m in managers {
+            s.spawn(move || m.receive_stuff());
+        }
         s.spawn(move || {
             reporter.report_stuff();
         });
