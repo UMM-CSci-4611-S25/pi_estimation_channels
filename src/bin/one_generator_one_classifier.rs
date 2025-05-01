@@ -1,4 +1,4 @@
-use pi_estimation_channels::{NUM_POINTS, point::Point, print_estimate};
+use pi_estimation_channels::{NUM_POINTS, calculate_estimate, point::Point};
 use rand::{
     Rng,
     distr::{Distribution, StandardUniform},
@@ -11,7 +11,7 @@ use std::{
 };
 
 struct MessageGenerator<T> {
-    num_messages: u32,
+    num_messages: usize,
     send_channel: SyncSender<T>,
 }
 
@@ -20,7 +20,7 @@ where
     T: Default + Debug,
     StandardUniform: Distribution<T>,
 {
-    pub fn new(num_messages: u32, send_channel: SyncSender<T>) -> Self {
+    pub fn new(num_messages: usize, send_channel: SyncSender<T>) -> Self {
         Self {
             num_messages,
             send_channel,
@@ -36,12 +36,12 @@ where
 }
 
 struct PointManager {
-    num_points: u32,
+    num_points: usize,
     receive_channel: mpsc::Receiver<Point>,
 }
 
 impl PointManager {
-    pub fn new(num_points: u32, receive_channel: mpsc::Receiver<Point>) -> Self {
+    pub fn new(num_points: usize, receive_channel: mpsc::Receiver<Point>) -> Self {
         Self {
             num_points,
             receive_channel,
@@ -61,7 +61,7 @@ impl PointManager {
             total_points += 1;
 
             if i % 10_000 == 0 {
-                print_estimate(num_inside, total_points);
+                calculate_estimate(num_inside, total_points);
             }
         }
     }
