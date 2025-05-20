@@ -133,7 +133,6 @@ impl Reporter {
     }
 }
 
-const NUM_GENERATORS: usize = 1;
 const NUM_MANAGERS: usize = 2;
 
 fn main() {

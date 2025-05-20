@@ -1,4 +1,4 @@
-use pi_estimation_channels::{NUM_POINTS, point::Point, print_estimate};
+use pi_estimation_channels::{NUM_POINTS, calculate_estimate, point::Point};
 use rand::{Rng, rng};
 
 fn main() {
@@ -14,7 +14,7 @@ fn main() {
         }
 
         if i % 1_000 == 0 {
-            print_estimate(num_inside, num_outside);
+            calculate_estimate(num_inside, num_outside);
         }
     }
 }

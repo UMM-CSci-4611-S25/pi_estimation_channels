@@ -61,7 +61,8 @@ impl PointManager {
             total_points += 1;
 
             if i % 10_000 == 0 {
-                calculate_estimate(num_inside, total_points);
+                let estimate = calculate_estimate(num_inside, total_points);
+                println!("Estimate after {i} points is {estimate}.");
             }
         }
     }
